@@ -1,0 +1,19 @@
+Layout.css
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #E5DED7; /* Beige background */
+  }
+  
+  /* Main container */
+  .layout-container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  /* Main content */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  

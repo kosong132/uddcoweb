@@ -8,7 +8,7 @@ import {
   Truck 
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-
+import "../assets/SideBar.css";
 const Sidebar = () => {
   const location = useLocation();
   

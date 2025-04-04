@@ -1,8 +1,8 @@
 // src/components/Layout.tsx
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import NavBar from '../components/NavBar.tsx';
-import Sidebar from '../components/Sidebar.tsx';
+import NavBar from '../components/Navbar';
+import Sidebar from '../components/Sidebar';
 
 const Layout = () => {
   return (
