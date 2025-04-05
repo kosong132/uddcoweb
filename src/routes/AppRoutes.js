@@ -11,6 +11,7 @@ import Order from "../pages/Order";
 import Chat from "../pages/Chat"; 
 import Profile from "../pages/Profile"; 
 import Layout from "../components/Layout";
+import Delivery from "../pages/Delivery";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -25,6 +26,7 @@ const AppRoutes = () => {
         <Route path="order" element={<Order />} />
         <Route path="chat" element={<Chat />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="delivery" element={<Delivery />} />
       </Route>
     </Routes>
   );

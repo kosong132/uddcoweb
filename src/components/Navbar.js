@@ -1,13 +1,16 @@
 import React from 'react';
 import { LogOut } from 'lucide-react';
 import "../assets/NavBar.css";
+import logo from '../assets/img/logo.png';
 
+// Then use:
+<img src={logo} alt="Logo" className="w-full h-full object-cover" />
 const NavBar = () => {
   return (
     <div className="fixed top-0 left-0 right-0 z-10 bg-white shadow-sm h-16 flex items-center px-4">
       {/* Left Side (Logo Placeholder) */}
-      <div className="w-10 h-10 bg-gradient-to-br from-orange-200 to-blue-200 rounded-full flex items-center justify-center">
-        {/* Logo SVG or Icon */}
+      <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden">
+        { <img src={logo} alt="Logo" className="w-full h-full object-cover" />}
       </div>
 
       {/* Center Title */}
