@@ -12,6 +12,7 @@ import Chat from "../pages/Chat";
 import Profile from "../pages/Profile"; 
 import Layout from "../components/Layout";
 import Delivery from "../pages/Delivery";
+import ResetNewPassword from "../pages/ResetNewPassword";
 const AppRoutes = () => {
   return (
     <Routes>
@@ -20,6 +21,7 @@ const AppRoutes = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/reset-new-password" element={<ResetNewPassword />} />
       <Route path="/" element={<Layout />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="product" element={<Product />} />
