@@ -182,7 +182,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
       });
   
       // Close the form/modal
-      onClose();
+      window.location.reload(); 
     } catch (error) {
       // Display error message to the user
       console.error("Error saving product:", error.response ? error.response.data : error.message);
