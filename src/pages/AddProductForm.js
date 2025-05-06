@@ -10,7 +10,7 @@ const COLOR_OPTIONS = [
   { name: 'Red', code: '#FF0000' }
 ];
 const CUSTOMIZATION_OPTIONS = ['Screen Printing', 'Heat Transfer Printing', 'Sublimation Printing', 'Embroidery', 'Vinyl Printing'];
-
+const AVAILABLE_SIZE=["XS", "S","M","L","XL","2XL","3XL","4XL"];
 const AddProductForm = ({ onClose, onSaveSuccess }) => {
   const [formData, setFormData] = useState({
     id: "",
@@ -20,6 +20,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
     price: "",
     colors: [{ name: "Red", quantity: 0 }],
     customizationOptions: [],
+    availableSizes: [], 
     description: "",
     available: false,
     image: null,
@@ -72,17 +73,27 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
     setFormData({ ...formData, customizationOptions: options });
   };
 
+  const handleSizeChange = (size) => {
+      const newSizes =formData.availableSizes.includes(size)
+        ? formData.availableSizes.filter(s => s !== size) // remove if already exists
+        : [...formData.availableSizes, size]; // add if not exists
+      setFormData({...formData,availableSizes:newSizes});
+
+    };
+  
+
+
   const uploadImage = async (image) => {
     try {
       // Validate the input
       if (!image) {
         throw new Error("No image file provided");
       }
-  
+
       // Create FormData and append the image
       const formData = new FormData();
       formData.append("image", image); // Ensure the field name matches backend's expectation
-  
+
       // Send the image to the backend
       const response = await axios.post(
         "http://localhost:8080/products/upload-image",
@@ -100,12 +111,12 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
           },
         }
       );
-  
+
       // Optional: Validate the response structure
       if (!response.data || !response.data.imageUrl) {
         throw new Error("No image URL received from the server");
       }
-  
+
       return response.data.imageUrl; // Returning the image URL
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -122,7 +133,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
       }
     }
   };
-  
+
   const validateForm = () => {
     if (
       !formData.id ||
@@ -135,38 +146,39 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
       !formData.description ||
       formData.colors.length === 0 ||
       !formData.colors.every((color) => color.name && color.quantity > 0) ||
-      formData.customizationOptions.length === 0
+      formData.customizationOptions.length === 0||
+      formData.availableSizes.length === 0
     ) {
       alert("Please fill in all required fields and ensure all values are valid.");
       return false;
     }
     return true;
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+    console.log("Selected sizes:", formData.availableSizes); // <- Add this
     // Validate form before proceeding
     if (!validateForm()) return;
-  
+
     try {
       // Upload image first and get the image URL
       const imageUrl = await uploadImage(formData.image);
-  
+
       // Prepare product data, including the uploaded image URL
       const productData = {
         ...formData,
         imageUrl,
         price: parseFloat(formData.price), // Ensure price is a valid number
       };
-  
+
       // Submit product data to backend
       const response = await axios.post("http://localhost:8080/products/add", productData);
-  
+
       // On successful save
       console.log("Product added successfully", response.data);
       onSaveSuccess(response.data);
-  
+
       // Reset form after successful submission
       setFormData({
         id: "",
@@ -176,28 +188,29 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
         price: "",
         colors: [{ name: "Red", quantity: 0 }],
         customizationOptions: [],
+        availableSizes: [], 
         description: "",
         available: false,
         image: null,
       });
-  
+
       // Close the form/modal
-      window.location.reload(); 
+      window.location.reload();
     } catch (error) {
       // Display error message to the user
       console.error("Error saving product:", error.response ? error.response.data : error.message);
       alert(`Error saving product: ${error.response ? error.response.data.message : error.message}`);
     }
   };
-  
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-screen overflow-y-auto">
         <div className="flex justify-between items-center p-4 bg-orange-100 rounded-t-lg">
           <h2 className="text-xl font-bold text-gray-800">Add New Product</h2>
-          <button 
-            type="button" 
-            onClick={onClose} 
+          <button
+            type="button"
+            onClick={onClose}
             className="text-gray-700 hover:text-gray-900"
           >
             ✖
@@ -230,8 +243,8 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                 onChange={handleImageUpload}
                 required
               />
-              <label 
-                htmlFor="imageUpload" 
+              <label
+                htmlFor="imageUpload"
                 className="mt-2 w-full py-2 border rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer"
               >
                 Upload Product Image*
@@ -367,6 +380,25 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                       />
                       <label htmlFor={option.replace(/\s+/g, '')} className="ml-2 text-sm text-gray-700">
                         {option}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Available Sizes*</label>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {AVAILABLE_SIZE.map((size) => (
+                    <div key={size} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={size.replace(/\s+/g,'')}
+                        checked={formData.availableSizes.includes(size)}
+                        onChange={() => handleSizeChange(size)}
+                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={size.replace(/\s+/g,'')} className="ml-2 text-sm text-gray-700">
+                        {size}
                       </label>
                     </div>
                   ))}

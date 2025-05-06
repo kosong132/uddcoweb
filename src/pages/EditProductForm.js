@@ -163,7 +163,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
     if (!isValid) return;
 
     try {
-      const imageUrl = await uploadImage(editFormData.image);
+      let imageUrl = editFormData.imageUrl;
 
       // If an image file has been selected, upload it
       if (editFormData.imageFile) {
@@ -172,7 +172,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
         formData.append("productId", editFormData.id);
 
         const uploadResponse = await fetch(`http://localhost:8080/products/upload-image`, {
-          method: "PUSH",
+          method: "POST",
           body: formData,
         });
 
@@ -475,6 +475,19 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
                   placeholder="Describe the product..."
                   rows="4"
                 />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="available"
+                  name="available"
+                  checked={editFormData.available}
+                  onChange={handleFormChange}
+                  className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                />
+                <label htmlFor="available" className="ml-2 text-sm text-gray-700">
+                  Product Available for Order
+                </label>
               </div>
 
               <div className="flex justify-end space-x-4 mt-4">
