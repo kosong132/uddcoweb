@@ -8,24 +8,31 @@ const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-
   const handleLogin = async () => {
     try {
-      const response = await axios.post("http://localhost:8080/auth/login", {
-        username,
-        password,
-      });
-  
+      const response = await axios.post(
+        "http://localhost:8080/auth/login?client=web",
+        {
+          username,
+          password,
+        },
+        {
+          withCredentials: true, // 👈 allows receiving cookies
+        }
+      );
+
       console.log("Login success:", response.data);
-      // Optionally store user info
-      // localStorage.setItem("user", JSON.stringify(response.data));
+      // Save user data in localStorage
+      localStorage.setItem("user", JSON.stringify(response.data));
+
       navigate("/dashboard");
     } catch (error) {
-      console.error("Login failed:", error.response?.data?.message || error.message);
+      console.error("Login failed:", error.response?.data || error.message);
       alert("Login failed. Please check your credentials.");
     }
   };
-  
+
+
   return (
     <AuthLayout>
       <h2 className="text-xl font-semibold mb-4 text-center">Login Page</h2>
