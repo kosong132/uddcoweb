@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
+// import axios from "axios";
 
 const COLOR_OPTIONS = [
   { name: 'Grey', code: '#A9A9A9' },
@@ -17,6 +17,7 @@ const CUSTOMIZATION_OPTIONS = [
   'Embroidery',
   'Vinyl Printing'
 ];
+const AVAILABLE_SIZE = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 
 const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
   const [editFormData, setEditFormData] = useState({
@@ -27,6 +28,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
     price: '',
     colors: [],
     customizationOptions: [],
+    availableSizes: [],
     description: '',
     available: false,
     imageUrl: '',
@@ -46,6 +48,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
         price: product.price,
         colors: product.colors || [],
         customizationOptions: product.customizationOptions || [],
+        availableSizes: product.availableSizes || [],
         description: product.description,
         available: product.available,
         imageUrl: product.imageUrl || '/assets/placeholder.png', // Set a fallback image URL
@@ -72,70 +75,6 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
     }
   };
 
-  // const handleImageUpload = (e) => {
-  //   const file = e.target.files[0];
-  //   if (file) {
-  //     // You can show the preview using URL.createObjectURL
-  //     setEditFormData((prevData) => ({
-  //       ...prevData,
-  //       imageFile: file,
-  //       imageUrl: URL.createObjectURL(file),
-  //     }));
-
-  //     // After successful upload, update the image URL
-  //     uploadImage(file);
-  //   }
-  // };
-  const uploadImage = async (image) => {
-    try {
-      // Validate the input
-      if (!image) {
-        throw new Error("No image file provided");
-      }
-
-      // Create FormData and append the image
-      const formData = new FormData();
-      formData.append("image", image); // Ensure the field name matches backend's expectation
-
-      // Send the image to the backend
-      const response = await axios.post(
-        "http://localhost:8080/products/upload-image",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data", // Important for file uploads
-          },
-          // Optional: Track upload progress
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            console.log(`Upload progress: ${percentCompleted}%`);
-          },
-        }
-      );
-
-      // Optional: Validate the response structure
-      if (!response.data || !response.data.imageUrl) {
-        throw new Error("No image URL received from the server");
-      }
-
-      return response.data.imageUrl; // Returning the image URL
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      // Enhanced error message
-      if (error.response) {
-        console.error("Server response data:", error.response.data);
-        throw new Error(error.response.data.message || `Image upload failed with status ${error.response.status}`);
-      } else if (error.request) {
-        console.error("No response received:", error.request);
-        throw new Error("No response received from server");
-      } else {
-        console.error("Request setup error:", error.message);
-        throw new Error(error.message);
-      }
-    }
-  };
 
   const validateForm = () => {
     if (
@@ -149,7 +88,8 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
       !editFormData.description ||
       editFormData.colors.length === 0 ||
       !editFormData.colors.every((color) => color.name && color.quantity > 0) ||
-      editFormData.customizationOptions.length === 0
+      editFormData.customizationOptions.length === 0 ||
+      editFormData.availableSizes.length === 0
     ) {
       alert("Please fill in all required fields and ensure all values are valid.");
       return false;
@@ -157,68 +97,69 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
     return true;
   };
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const isValid = validateForm();
-    if (!isValid) return;
+  const isValid = validateForm();
+  if (!isValid) return;
 
-    try {
-      let imageUrl = editFormData.imageUrl;
+  try {
+    let imageUrl = editFormData.imageUrl;
 
-      // If an image file has been selected, upload it
-      if (editFormData.imageFile) {
-        const formData = new FormData();
-        formData.append("file", editFormData.imageFile);
-        formData.append("productId", editFormData.id);
+    // ✅ If a new image file has been selected, upload it
+    if (editFormData.image) {
+      const formData = new FormData();
+      formData.append("image", editFormData.image); // ✅ Must match @RequestParam("image")
 
-        const uploadResponse = await fetch(`http://localhost:8080/products/upload-image`, {
-          method: "POST",
-          body: formData,
-        });
+      const uploadResponse = await fetch("http://localhost:8080/products/upload-image", {
+        method: "POST",
+        body: formData,
+      });
 
-        const uploadData = await uploadResponse.json();
+      const uploadData = await uploadResponse.json();
 
-        if (!uploadResponse.ok) {
-          throw new Error(uploadData.message || "Image upload failed");
-        }
-
-        imageUrl = uploadData.imageUrl; // Update with uploaded image URL
+      if (!uploadResponse.ok) {
+        throw new Error(uploadData.message || "Image upload failed");
       }
 
-      const productToUpdate = {
-        ...editFormData,
-        imageUrl, // Ensure image URL is sent with update
-        colors: editFormData.colors.map(c => ({
-          name: c.name,
-          quantity: c.quantity,
-        })),
-        customizationOptions: editFormData.customizationOptions,
-      };
-
-      const updateResponse = await fetch(
-        `http://localhost:8080/products/update/${editFormData.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(productToUpdate),
-        }
-      );
-
-      if (!updateResponse.ok) {
-        const errorData = await updateResponse.text();
-        throw new Error(errorData || "Failed to update product");
-      }
-
-      alert("Product updated successfully!");
-      window.location.reload(); // Refresh page
-
-    } catch (error) {
-      console.error("Update error:", error);
-      alert(`Error updating product: ${error.message}`);
+      imageUrl = uploadData.imageUrl;
     }
-  };
+
+    // ✅ Prepare product object with updated image URL and data
+    const productToUpdate = {
+      ...editFormData,
+      imageUrl,
+      colors: editFormData.colors.map((c) => ({
+        name: c.name,
+        quantity: c.quantity,
+      })),
+      customizationOptions: editFormData.customizationOptions,
+    };
+
+    // ✅ Send update request
+    const updateResponse = await fetch(
+      `http://localhost:8080/products/update/${editFormData.id}`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(productToUpdate),
+      }
+    );
+
+    if (!updateResponse.ok) {
+      const errorData = await updateResponse.text();
+      throw new Error(errorData || "Failed to update product");
+    }
+
+    alert("Product updated successfully!");
+    window.location.reload();
+  } catch (error) {
+    console.error("Update error:", error);
+    alert(`Error updating product: ${error.message}`);
+  }
+};
+
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
 
@@ -288,7 +229,17 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
       };
     });
   };
-
+  const handleSizeChange = (size) => {
+    setEditFormData((prevData) => {
+      const updatedAvailableSizes = prevData.availableSizes.includes(size)
+        ? prevData.availableSizes.filter((s) => s !== size)
+        : [...prevData.availableSizes, size];
+      return {
+        ...prevData,
+        availableSizes: updatedAvailableSizes,
+      };
+    });
+  };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
       <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl max-h-screen overflow-y-auto">
@@ -330,7 +281,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
               />
               <label
                 htmlFor="imageUpload"
-                className="mt-2 w-full py-2 border rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer"
+                   className="mt-2 w-full py-2 border border-gray-400 rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer block text-gray-700 font-medium"
               >
                 Edit Product Image
               </label>
@@ -464,6 +415,25 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
                   ))}
                 </div>
               </div>
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Available Sizes*</label>
+                <div className="grid grid-cols-3 gap-2 mt-2">
+                  {AVAILABLE_SIZE.map((size,index) => (
+                    <div key={index} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id={size.replace(/\s+/g, '')}
+                        checked={editFormData.availableSizes.includes(size)}
+                        onChange={() => handleSizeChange(size)}
+                        className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor={size.replace(/\s+/g, '')} className="ml-2 text-sm text-gray-700">
+                        {size}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -514,3 +484,68 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
 };
 
 export default EditProductForm;
+
+  // const handleImageUpload = (e) => {
+  //   const file = e.target.files[0];
+  //   if (file) {
+  //     // You can show the preview using URL.createObjectURL
+  //     setEditFormData((prevData) => ({
+  //       ...prevData,
+  //       imageFile: file,
+  //       imageUrl: URL.createObjectURL(file),
+  //     }));
+
+  //     // After successful upload, update the image URL
+  //     uploadImage(file);
+  //   }
+  // };
+  // const uploadImage = async (image) => {
+  //   try {
+  //     // Validate the input
+  //     if (!image) {
+  //       throw new Error("No image file provided");
+  //     }
+
+  //     // Create FormData and append the image
+  //     const formData = new FormData();
+  //     formData.append("image", image); // Ensure the field name matches backend's expectation
+
+  //     // Send the image to the backend
+  //     const response = await axios.post(
+  //       "http://localhost:8080/products/upload-image",
+  //       formData,
+  //       {
+  //         headers: {
+  //           "Content-Type": "multipart/form-data", // Important for file uploads
+  //         },
+  //         // Optional: Track upload progress
+  //         onUploadProgress: (progressEvent) => {
+  //           const percentCompleted = Math.round(
+  //             (progressEvent.loaded * 100) / progressEvent.total
+  //           );
+  //           console.log(`Upload progress: ${percentCompleted}%`);
+  //         },
+  //       }
+  //     );
+
+  //     // Optional: Validate the response structure
+  //     if (!response.data || !response.data.imageUrl) {
+  //       throw new Error("No image URL received from the server");
+  //     }
+
+  //     return response.data.imageUrl; // Returning the image URL
+  //   } catch (error) {
+  //     console.error("Error uploading image:", error);
+  //     // Enhanced error message
+  //     if (error.response) {
+  //       console.error("Server response data:", error.response.data);
+  //       throw new Error(error.response.data.message || `Image upload failed with status ${error.response.status}`);
+  //     } else if (error.request) {
+  //       console.error("No response received:", error.request);
+  //       throw new Error("No response received from server");
+  //     } else {
+  //       console.error("Request setup error:", error.message);
+  //       throw new Error(error.message);
+  //     }
+  //   }
+  // };

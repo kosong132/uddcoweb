@@ -245,7 +245,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
               />
               <label
                 htmlFor="imageUpload"
-                className="mt-2 w-full py-2 border rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer"
+                  className="mt-2 w-full py-2 border border-gray-400 rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer block text-gray-700 font-medium"
               >
                 Upload Product Image*
               </label>
@@ -258,7 +258,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                   <input
                     type="text"
                     name="id"
-                    className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                className="w-full px-3 py-2 border border-gray-500 rounded text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                     value={formData.id}
                     onChange={handleFormChange}
                     placeholder="Product ID"
@@ -270,7 +270,8 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                   <input
                     type="text"
                     name="name"
-                    className="w-full px-3 py-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+               className="w-full px-3 py-2 border border-gray-500 rounded text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+
                     value={formData.name}
                     onChange={handleFormChange}
                     placeholder="Product Name"
@@ -336,7 +337,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                 {formData.colors.map((color, index) => (
                   <div key={`${color.name}-${index}`} className="flex items-center space-x-2 mt-2">
                     <select
-                      className="flex-grow px-3 py-2 border rounded text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
+                      className="flex-grow px-3 py-2 border border-gray-400 rounded text-sm focus:outline-none focus:ring-1 focus:ring-orange-500"
                       value={color.name}
                       onChange={(e) => handleColorChange(index, e.target.value)}
                       required
