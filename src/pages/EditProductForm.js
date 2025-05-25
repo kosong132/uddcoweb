@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // import axios from "axios";
+// At the top of your component file (React way)
+import '@google/model-viewer';
 
 const COLOR_OPTIONS = [
   { name: 'Grey', code: '#A9A9A9' },
@@ -32,12 +34,14 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
     description: '',
     available: false,
     imageUrl: '',
+    modelFile: null,
   });
 
   // Populate form with existing product data if available
   useEffect(() => {
-    console.log("Loaded product:", product); // Add this
-    console.log("Product image URL:", product.imageUrl); // ✅
+    console.log("Loaded product:", product); // Debug
+    console.log("Product image URL:", product.imageUrl);
+    console.log("Product model URL:", product.modelUrl); // ✅ Debug the model
 
     if (product) {
       setEditFormData({
@@ -51,10 +55,12 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
         availableSizes: product.availableSizes || [],
         description: product.description,
         available: product.available,
-        imageUrl: product.imageUrl || '/assets/placeholder.png', // Set a fallback image URL
+        imageUrl: product.imageUrl || '/assets/placeholder.png',
+        modelUrl: product.modelUrl || '', // ✅ Add this line to load 3D model
       });
     }
   }, [product]);
+
 
   const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -71,6 +77,15 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
         ...prevData,
         image: file, // the actual file for upload
         imageUrl: previewUrl, // this shows the image immediately
+      }));
+    }
+  };
+  const handleModelUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setEditFormData((prevData) => ({
+        ...prevData,
+        modelFile: file, // store the selected model file
       }));
     }
   };
@@ -97,68 +112,88 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
     return true;
   };
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  const isValid = validateForm();
-  if (!isValid) return;
+    const isValid = validateForm();
+    if (!isValid) return;
 
-  try {
-    let imageUrl = editFormData.imageUrl;
+    try {
+      let imageUrl = editFormData.imageUrl;
 
-    // ✅ If a new image file has been selected, upload it
-    if (editFormData.image) {
-      const formData = new FormData();
-      formData.append("image", editFormData.image); // ✅ Must match @RequestParam("image")
+      // ✅ If a new image file has been selected, upload it
+      if (editFormData.image) {
+        const formData = new FormData();
+        formData.append("image", editFormData.image); // ✅ Must match @RequestParam("image")
 
-      const uploadResponse = await fetch("http://localhost:8080/products/upload-image", {
-        method: "POST",
-        body: formData,
-      });
+        const uploadResponse = await fetch("http://localhost:8080/products/upload-image", {
+          method: "POST",
+          body: formData,
+        });
 
-      const uploadData = await uploadResponse.json();
+        const uploadData = await uploadResponse.json();
 
-      if (!uploadResponse.ok) {
-        throw new Error(uploadData.message || "Image upload failed");
+        if (!uploadResponse.ok) {
+          throw new Error(uploadData.message || "Image upload failed");
+        }
+
+        imageUrl = uploadData.imageUrl;
+      }
+      let modelUrl = product.modelUrl || ""; // fallback to existing URL if already present
+
+      if (editFormData.modelFile) {
+        const modelFormData = new FormData();
+        modelFormData.append("model", editFormData.modelFile); // must match @RequestParam("model")
+
+        const modelUploadResponse = await fetch("http://localhost:8080/products/upload-model", {
+          method: "POST",
+          body: modelFormData,
+        });
+
+        const modelUploadData = await modelUploadResponse.json();
+
+        if (!modelUploadResponse.ok) {
+          throw new Error(modelUploadData.message || "Model upload failed");
+        }
+
+        modelUrl = modelUploadData.modelUrl;
       }
 
-      imageUrl = uploadData.imageUrl;
-    }
+      // ✅ Prepare product object with updated image URL and data
+      const productToUpdate = {
+        ...editFormData,
+        imageUrl,
+        modelUrl,
+        colors: editFormData.colors.map((c) => ({
+          name: c.name,
+          quantity: c.quantity,
+        })),
+        customizationOptions: editFormData.customizationOptions,
+      };
 
-    // ✅ Prepare product object with updated image URL and data
-    const productToUpdate = {
-      ...editFormData,
-      imageUrl,
-      colors: editFormData.colors.map((c) => ({
-        name: c.name,
-        quantity: c.quantity,
-      })),
-      customizationOptions: editFormData.customizationOptions,
-    };
+      // ✅ Send update request
+      const updateResponse = await fetch(
+        `http://localhost:8080/products/update/${editFormData.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(productToUpdate),
+        }
+      );
 
-    // ✅ Send update request
-    const updateResponse = await fetch(
-      `http://localhost:8080/products/update/${editFormData.id}`,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(productToUpdate),
+      if (!updateResponse.ok) {
+        const errorData = await updateResponse.text();
+        throw new Error(errorData || "Failed to update product");
       }
-    );
 
-    if (!updateResponse.ok) {
-      const errorData = await updateResponse.text();
-      throw new Error(errorData || "Failed to update product");
+      alert("Product updated successfully!");
+      window.location.reload();
+    } catch (error) {
+      console.error("Update error:", error);
+      alert(`Error updating product: ${error.message}`);
     }
-
-    alert("Product updated successfully!");
-    window.location.reload();
-  } catch (error) {
-    console.error("Update error:", error);
-    alert(`Error updating product: ${error.message}`);
-  }
-};
+  };
 
   const handleDelete = async () => {
     if (!window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
@@ -281,10 +316,42 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
               />
               <label
                 htmlFor="imageUpload"
-                   className="mt-2 w-full py-2 border border-gray-400 rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer block text-gray-700 font-medium"
+                className="mt-2 w-full py-2 border border-gray-400 rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer block text-gray-700 font-medium"
               >
                 Edit Product Image
               </label>
+
+              {editFormData && editFormData.modelUrl ? (
+                <model-viewer
+                  src={editFormData.modelUrl}
+                  alt="3D Model"
+                  auto-rotate
+                  camera-controls
+                  ar
+                  style={{ width: '100%', height: '300px', marginTop: '1rem' }}
+                />
+              ) : (
+                <div className="text-gray-400 mt-2">No 3D Model Available</div>
+              )}
+
+
+              <input
+                type="file"
+                accept=".glb"
+                className="hidden"
+                id="modelUpload"
+                onChange={handleModelUpload}
+              />
+              <label
+                htmlFor="modelUpload"
+                className="mt-2 w-full py-2 border border-gray-400 rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer block text-gray-700 font-medium"
+              >
+                EDIT 3D Model
+              </label>
+              {editFormData.modelFile && (
+                <p className="text-xs mt-1 text-gray-600">Selected: {editFormData.modelFile.name}</p>
+              )}
+
             </div>
 
             {/* Right column - form fields */}
@@ -418,7 +485,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Available Sizes*</label>
                 <div className="grid grid-cols-3 gap-2 mt-2">
-                  {AVAILABLE_SIZE.map((size,index) => (
+                  {AVAILABLE_SIZE.map((size, index) => (
                     <div key={index} className="flex items-center">
                       <input
                         type="checkbox"
@@ -485,67 +552,3 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
 
 export default EditProductForm;
 
-  // const handleImageUpload = (e) => {
-  //   const file = e.target.files[0];
-  //   if (file) {
-  //     // You can show the preview using URL.createObjectURL
-  //     setEditFormData((prevData) => ({
-  //       ...prevData,
-  //       imageFile: file,
-  //       imageUrl: URL.createObjectURL(file),
-  //     }));
-
-  //     // After successful upload, update the image URL
-  //     uploadImage(file);
-  //   }
-  // };
-  // const uploadImage = async (image) => {
-  //   try {
-  //     // Validate the input
-  //     if (!image) {
-  //       throw new Error("No image file provided");
-  //     }
-
-  //     // Create FormData and append the image
-  //     const formData = new FormData();
-  //     formData.append("image", image); // Ensure the field name matches backend's expectation
-
-  //     // Send the image to the backend
-  //     const response = await axios.post(
-  //       "http://localhost:8080/products/upload-image",
-  //       formData,
-  //       {
-  //         headers: {
-  //           "Content-Type": "multipart/form-data", // Important for file uploads
-  //         },
-  //         // Optional: Track upload progress
-  //         onUploadProgress: (progressEvent) => {
-  //           const percentCompleted = Math.round(
-  //             (progressEvent.loaded * 100) / progressEvent.total
-  //           );
-  //           console.log(`Upload progress: ${percentCompleted}%`);
-  //         },
-  //       }
-  //     );
-
-  //     // Optional: Validate the response structure
-  //     if (!response.data || !response.data.imageUrl) {
-  //       throw new Error("No image URL received from the server");
-  //     }
-
-  //     return response.data.imageUrl; // Returning the image URL
-  //   } catch (error) {
-  //     console.error("Error uploading image:", error);
-  //     // Enhanced error message
-  //     if (error.response) {
-  //       console.error("Server response data:", error.response.data);
-  //       throw new Error(error.response.data.message || `Image upload failed with status ${error.response.status}`);
-  //     } else if (error.request) {
-  //       console.error("No response received:", error.request);
-  //       throw new Error("No response received from server");
-  //     } else {
-  //       console.error("Request setup error:", error.message);
-  //       throw new Error(error.message);
-  //     }
-  //   }
-  // };

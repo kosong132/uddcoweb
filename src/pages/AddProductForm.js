@@ -10,7 +10,7 @@ const COLOR_OPTIONS = [
   { name: 'Red', code: '#FF0000' }
 ];
 const CUSTOMIZATION_OPTIONS = ['Screen Printing', 'Heat Transfer Printing', 'Sublimation Printing', 'Embroidery', 'Vinyl Printing'];
-const AVAILABLE_SIZE=["XS", "S","M","L","XL","2XL","3XL","4XL"];
+const AVAILABLE_SIZE = ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL"];
 const AddProductForm = ({ onClose, onSaveSuccess }) => {
   const [formData, setFormData] = useState({
     id: "",
@@ -20,10 +20,11 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
     price: "",
     colors: [{ name: "Red", quantity: 0 }],
     customizationOptions: [],
-    availableSizes: [], 
+    availableSizes: [],
     description: "",
     available: false,
     image: null,
+    model: null,
   });
 
   const handleFormChange = (e) => {
@@ -38,6 +39,12 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
     const file = e.target.files[0];
     if (file) {
       setFormData({ ...formData, image: file });
+    }
+  };
+  const handleModelUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, model: file });
     }
   };
 
@@ -74,13 +81,48 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
   };
 
   const handleSizeChange = (size) => {
-      const newSizes =formData.availableSizes.includes(size)
-        ? formData.availableSizes.filter(s => s !== size) // remove if already exists
-        : [...formData.availableSizes, size]; // add if not exists
-      setFormData({...formData,availableSizes:newSizes});
+    const newSizes = formData.availableSizes.includes(size)
+      ? formData.availableSizes.filter(s => s !== size) // remove if already exists
+      : [...formData.availableSizes, size]; // add if not exists
+    setFormData({ ...formData, availableSizes: newSizes });
 
-    };
-  
+  };
+
+  const uploadFile = async (file, fieldName = "model") => {
+    try {
+      if (!file) throw new Error("No file provided");
+
+      const formData = new FormData();
+      formData.append(fieldName, file);
+
+      const response = await axios.post(
+        "http://localhost:8080/products/upload-model",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            console.log(`Upload progress (${fieldName}): ${percentCompleted}%`);
+          },
+        }
+      );
+
+      if (!response.data || !response.data.modelUrl) {
+        throw new Error(`No model URL received for ${fieldName}`);
+      }
+
+      return response.data.modelUrl;
+    } catch (error) {
+      console.error(`Error uploading ${fieldName}:`, error);
+      if (error.response) {
+        throw new Error(error.response.data.message || `Upload failed with status ${error.response.status}`);
+      } else if (error.request) {
+        throw new Error("No response received from server");
+      } else {
+        throw new Error(error.message);
+      }
+    }
+  };
 
 
   const uploadImage = async (image) => {
@@ -146,7 +188,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
       !formData.description ||
       formData.colors.length === 0 ||
       !formData.colors.every((color) => color.name && color.quantity > 0) ||
-      formData.customizationOptions.length === 0||
+      formData.customizationOptions.length === 0 ||
       formData.availableSizes.length === 0
     ) {
       alert("Please fill in all required fields and ensure all values are valid.");
@@ -164,11 +206,12 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
     try {
       // Upload image first and get the image URL
       const imageUrl = await uploadImage(formData.image);
-
+      const modelUrl = await uploadFile(formData.model, "model");
       // Prepare product data, including the uploaded image URL
       const productData = {
         ...formData,
         imageUrl,
+        modelUrl,
         price: parseFloat(formData.price), // Ensure price is a valid number
       };
 
@@ -188,10 +231,11 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
         price: "",
         colors: [{ name: "Red", quantity: 0 }],
         customizationOptions: [],
-        availableSizes: [], 
+        availableSizes: [],
         description: "",
         available: false,
         image: null,
+        model: null,
       });
 
       // Close the form/modal
@@ -245,9 +289,24 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
               />
               <label
                 htmlFor="imageUpload"
-                  className="mt-2 w-full py-2 border border-gray-400 rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer block text-gray-700 font-medium"
+                className="mt-2 w-full py-2 border border-gray-400 rounded bg-gray-50 hover:bg-gray-100 text-sm text-center cursor-pointer block text-gray-700 font-medium"
               >
                 Upload Product Image*
+              </label>
+
+              {/* Model Upload */}
+              <input
+                type="file"
+                accept=".glb,.obj,.fbx"
+                className="hidden"
+                id="modelUpload"
+                onChange={handleModelUpload}
+              />
+              <label
+                htmlFor="modelUpload"
+                className="mt-2 w-full py-2 border border-blue-400 rounded bg-blue-50 hover:bg-blue-100 text-sm text-center cursor-pointer block text-blue-700 font-medium"
+              >
+                Upload 3D Model (.glb / .obj / .fbx)
               </label>
             </div>
 
@@ -258,7 +317,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                   <input
                     type="text"
                     name="id"
-                className="w-full px-3 py-2 border border-gray-500 rounded text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    className="w-full px-3 py-2 border border-gray-500 rounded text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                     value={formData.id}
                     onChange={handleFormChange}
                     placeholder="Product ID"
@@ -270,7 +329,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                   <input
                     type="text"
                     name="name"
-               className="w-full px-3 py-2 border border-gray-500 rounded text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                    className="w-full px-3 py-2 border border-gray-500 rounded text-sm focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
 
                     value={formData.name}
                     onChange={handleFormChange}
@@ -393,12 +452,12 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
                     <div key={size} className="flex items-center">
                       <input
                         type="checkbox"
-                        id={size.replace(/\s+/g,'')}
+                        id={size.replace(/\s+/g, '')}
                         checked={formData.availableSizes.includes(size)}
                         onChange={() => handleSizeChange(size)}
                         className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
                       />
-                      <label htmlFor={size.replace(/\s+/g,'')} className="ml-2 text-sm text-gray-700">
+                      <label htmlFor={size.replace(/\s+/g, '')} className="ml-2 text-sm text-gray-700">
                         {size}
                       </label>
                     </div>
