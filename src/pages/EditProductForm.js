@@ -125,7 +125,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
         const formData = new FormData();
         formData.append("image", editFormData.image); // ✅ Must match @RequestParam("image")
 
-        const uploadResponse = await fetch("http://localhost:8080/products/upload-image", {
+        const uploadResponse = await fetch("https://uddco.onrender.com/products/upload-image", {
           method: "POST",
           body: formData,
         });
@@ -144,7 +144,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
         const modelFormData = new FormData();
         modelFormData.append("model", editFormData.modelFile); // must match @RequestParam("model")
 
-        const modelUploadResponse = await fetch("http://localhost:8080/products/upload-model", {
+        const modelUploadResponse = await fetch("https://uddco.onrender.com/products/upload-model", {
           method: "POST",
           body: modelFormData,
         });
@@ -172,7 +172,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
 
       // ✅ Send update request
       const updateResponse = await fetch(
-        `http://localhost:8080/products/update/${editFormData.id}`,
+        `https://uddco.onrender.com/products/update/${editFormData.id}`,
         {
           method: "PUT",
           headers: {
@@ -199,7 +199,7 @@ const EditProductForm = ({ product, onClose, onSaveSuccess }) => {
     if (!window.confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
 
     try {
-      const response = await fetch(`http://localhost:8080/products/delete/${editFormData.id}`, {
+      const response = await fetch(`https://uddco.onrender.com/products/delete/${editFormData.id}`, {
         method: "DELETE",
       });
 

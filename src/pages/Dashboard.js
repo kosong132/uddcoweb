@@ -24,10 +24,10 @@ const Dashboard = () => {
     setLoading(true);
     try {
       const [orderRes, revenueRes, salesRes, usersRes] = await Promise.all([
-        axios.get("http://localhost:8080/api/dashboard/today-orders"),
-        axios.get("http://localhost:8080/api/dashboard/today-revenue"),
-        axios.get(`http://localhost:8080/api/dashboard/sales?year=${selectedYear}&month=${selectedMonth}`),
-        axios.get("http://localhost:8080/api/dashboard/total-users"),
+        axios.get("https://uddco.onrender.com/api/dashboard/today-orders"),
+        axios.get("https://uddco.onrender.com/api/dashboard/today-revenue"),
+        axios.get(`https://uddco.onrender.com/api/dashboard/sales?year=${selectedYear}&month=${selectedMonth}`),
+        axios.get("https://uddco.onrender.com/api/dashboard/total-users"),
       ]);
 
       setTodaysOrder(orderRes.data);

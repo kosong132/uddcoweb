@@ -3,7 +3,7 @@ import React from "react";
 
 import Login from "../pages/Login";
 import Register from "../pages/Register";
-import ResetPassword from "../pages/ResetPassword";
+import ResetPassword from "../pages/ForgotPassword";
 // import BaseLayout from "../layouts/BaseLayout"; // Ensure correct path
 import Dashboard from "../pages/Dashboard"; 
 import Product from "../pages/Product"; 

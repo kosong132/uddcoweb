@@ -9,7 +9,7 @@ const ResetPassword = () => {
 
   const handleSendResetLink = async () => {
     try {
-      const response = await axios.post("http://localhost:8080/auth/request-reset-password", null, {
+      const response = await axios.post("https://uddco.onrender.com/auth/request-reset-password", null, {
         params: { email },
       });
 

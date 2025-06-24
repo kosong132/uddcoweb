@@ -13,7 +13,7 @@ const Product = () => {
   // Fetch all products from the API
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/products/all');
+      const response = await axios.get('https://uddco.onrender.com/products/all');
       if (response.status === 200) {
         setProducts(response.data); // Assuming the API returns the products list as 'data'
       } else {

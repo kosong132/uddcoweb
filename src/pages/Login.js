@@ -11,7 +11,7 @@ const Login = () => {
   const handleLogin = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8080/auth/login?client=web",
+        "https://uddco.onrender.com/auth/login?client=web",
         {
           username,
           password,

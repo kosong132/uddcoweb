@@ -26,7 +26,7 @@ const handleUpdateOrder = async () => {
 
   try {
     const response = await axios.put(
-      `http://localhost:8080/orders/update-status/${selectedOrder.orderId}`,
+      `https://uddco.onrender.com/orders/update-status/${selectedOrder.orderId}`,
       { orderStatus: selectedOrder.orderStatus }
     );
 
@@ -45,7 +45,7 @@ const handleUpdateOrder = async () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await axios.get('http://localhost:8080/orders/all');
+      const res = await axios.get('https://uddco.onrender.com/orders/all');
       const ordersWithUsernames = res.data;
 
       // Extract all unique userIds from the orders
@@ -55,7 +55,7 @@ const handleUpdateOrder = async () => {
       const usernameMap = {};
       await Promise.all(userIds.map(async userId => {
         try {
-          const userRes = await axios.get(`http://localhost:8080/auth/users/${userId}`);
+          const userRes = await axios.get(`https://uddco.onrender.com/auth/users/${userId}`);
           usernameMap[userId] = userRes.data.username;
         } catch (error) {
           usernameMap[userId] = 'Unknown User';

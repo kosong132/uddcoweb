@@ -96,7 +96,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
       formData.append(fieldName, file);
 
       const response = await axios.post(
-        "http://localhost:8080/products/upload-model",
+        "https://uddco.onrender.com/products/upload-model",
         formData,
         {
           headers: { "Content-Type": "multipart/form-data" },
@@ -138,7 +138,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
 
       // Send the image to the backend
       const response = await axios.post(
-        "http://localhost:8080/products/upload-image",
+        "https://uddco.onrender.com/products/upload-image",
         formData,
         {
           headers: {
@@ -216,7 +216,7 @@ const AddProductForm = ({ onClose, onSaveSuccess }) => {
       };
 
       // Submit product data to backend
-      const response = await axios.post("http://localhost:8080/products/add", productData);
+      const response = await axios.post("https://uddco.onrender.com/products/add", productData);
 
       // On successful save
       console.log("Product added successfully", response.data);
