@@ -28,7 +28,7 @@ const AppRoutes = () => {
         <Route path="order" element={<Order />} />
         <Route path="chat" element={<Chat />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="delivery" element={<Delivery />} />
+        {/* <Route path="delivery" element={<Delivery />} /> */}
       </Route>
     </Routes>
   );

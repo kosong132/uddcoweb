@@ -4,8 +4,8 @@ import {
   Shirt, 
   ShoppingCart, 
   MessageCircle, 
-  User, 
-  Truck 
+  User
+  //Truck 
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import "../assets/SideBar.css";
@@ -18,7 +18,7 @@ const Sidebar = () => {
     { icon: ShoppingCart, name: 'Order', path: '/order' },
     { icon: MessageCircle, name: 'Chat', path: '/chat' },
     { icon: User, name: 'Profile', path: '/profile' },
-    { icon: Truck, name: 'Delivery', path: '/delivery' }
+    // { icon: Truck, name: 'Delivery', path: '/delivery' }
   ];
 
   return (

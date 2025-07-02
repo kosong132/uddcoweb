@@ -66,7 +66,7 @@ const Chat = () => {
     setError("");
 
     try {
-      const response = await axios.post("http://localhost:5000/api/chat", {
+      const response = await axios.post("https://uddco.onrender.com/api/chat", {
         query: inputMessage
       }, {
         headers: {
