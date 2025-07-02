@@ -28,14 +28,14 @@ const Chat = () => {
   // Load initial message and saved history
   useEffect(() => {
     const savedMessages = localStorage.getItem('chatMessages');
-    const initialMessages = savedMessages 
+    const initialMessages = savedMessages
       ? JSON.parse(savedMessages)
       : [{
-          sender: "bot",
-          text: "Hello! I'm your sales assistant. Ask me about:\n- Today's orders\n- Revenue data\n- Top products\n- Order status",
-          isChart: false
-        }];
-    
+        sender: "bot",
+        text: "Hello! I'm your sales assistant. Ask me about:\n- Today's orders\n- Revenue data\n- Top products\n- Order status",
+        isChart: false
+      }];
+
     setMessages(initialMessages);
   }, []);
 
@@ -59,7 +59,7 @@ const Chat = () => {
       isChart: false,
       timestamp: new Date().toISOString()
     };
-    
+
     setMessages(prev => [...prev, userMessage]);
     setInputMessage("");
     setLoading(true);
@@ -73,23 +73,22 @@ const Chat = () => {
           'Content-Type': 'application/json'
         }
       });
-
       const botResponse = {
         sender: "bot",
         text: response.data.response || response.data.text || "No response text",
-        isChart: response.data.chartData ? true : false,
-        chartData: response.data.chartData,
+        isChart: !!response.data.chartData,
+        chartData: response.data.chartData || null,
+        userList: response.data.userList || null,
         timestamp: new Date().toISOString()
       };
-      
       setMessages(prev => [...prev, botResponse]);
-      
+
     } catch (err) {
       console.error("API Error:", err);
-      const errorMessage = err.response?.data?.error || 
-                          err.message || 
-                          "Failed to get response from server";
-      
+      const errorMessage = err.response?.data?.error ||
+        err.message ||
+        "Failed to get response from server";
+
       setError(errorMessage);
       setMessages(prev => [...prev, {
         sender: "bot",
@@ -132,23 +131,23 @@ const Chat = () => {
         <div className="bg-blue-600 text-white p-4">
           <h2 className="text-lg font-semibold">Sales Assistant</h2>
         </div>
-        
+
         <div className="h-96 overflow-y-auto p-4 space-y-4">
           {messages.map((message, index) => (
-            <div 
-              key={`${message.timestamp}-${index}`} 
+            <div
+              key={`${message.timestamp}-${index}`}
               className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
             >
-              <div 
-                className={`max-w-3/4 rounded-lg p-3 ${
-                  message.sender === "user" 
-                    ? "bg-blue-100 text-blue-900" 
-                    : "bg-gray-100 text-gray-900"
-                }`}
+              <div
+                className={`max-w-3/4 rounded-lg p-3 ${message.sender === "user"
+                  ? "bg-blue-100 text-blue-900"
+                  : "bg-gray-100 text-gray-900"
+                  }`}
               >
-                {message.isChart ? (
-                  <div className="mt-2">
-                    <p className="whitespace-pre-line mb-2">{message.text}</p>
+                <>
+                  <p className="whitespace-pre-line mb-2">{message.text}</p>
+
+                  {message.isChart && message.chartData && (
                     <div className="bg-white p-3 rounded-lg">
                       <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={message.chartData}>
@@ -156,22 +155,44 @@ const Chat = () => {
                           <XAxis dataKey="name" />
                           <YAxis />
                           <Tooltip content={<CustomTooltip />} />
-                          <Bar 
-                            dataKey="value" 
-                            fill="#4f46e5" 
-                            radius={[10, 10, 0, 0]} 
-                          />
+                          <Bar dataKey="value" fill="#4f46e5" radius={[10, 10, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
-                  </div>
-                ) : (
-                  <p className="whitespace-pre-line">{message.text}</p>
-                )}
+                  )}
+
+                  {message.userList && Array.isArray(message.userList) && (
+                    <div className="mt-2 overflow-x-auto">
+                      <table className="table-auto border text-sm w-full">
+                        <thead>
+                          <tr className="bg-gray-200 text-left">
+                            <th className="px-2 py-1">Username</th>
+                            <th className="px-2 py-1">Email</th>
+                            <th className="px-2 py-1">Phone</th>
+                            <th className="px-2 py-1">Address</th>
+                            <th className="px-2 py-1">Role</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {message.userList.map((user, index) => (
+                            <tr key={index} className="border-t">
+                              <td className="px-2 py-1">{user.username}</td>
+                              <td className="px-2 py-1">{user.email}</td>
+                              <td className="px-2 py-1">{user.phoneNumber}</td>
+                              <td className="px-2 py-1">{user.address}</td>
+                              <td className="px-2 py-1">{user.role}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+
               </div>
             </div>
           ))}
-          
+
           {loading && (
             <div className="flex justify-start">
               <div className="bg-gray-100 text-gray-900 rounded-lg p-3">
@@ -185,7 +206,7 @@ const Chat = () => {
           )}
           <div ref={messagesEndRef} />
         </div>
-        
+
         <div className="p-4 border-t">
           <div className="flex flex-wrap gap-2 mb-3">
             {sampleQuestions.map((question, index) => (
@@ -223,8 +244,8 @@ const Chat = () => {
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
           <span className="font-semibold">Error:</span> {error}
-          <button 
-            onClick={() => setError("")} 
+          <button
+            onClick={() => setError("")}
             className="absolute top-1 right-1 text-red-700"
           >
             ×
